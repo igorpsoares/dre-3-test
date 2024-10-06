@@ -1,0 +1,65 @@
+Database error:
+==========================================================================================================================
+postgres-1           | 2024-10-05 13:48:24.728 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1           | 2024-10-05 13:48:24.768 UTC [63] LOG:  database system was shut down at 2024-10-05 13:48:24 UTC
+postgres-1           | 2024-10-05 13:48:24.801 UTC [1] LOG:  database system is ready to accept connections
+postgres-1           | 2024-10-05 13:48:26.689 UTC [76] FATAL:  role "airflow" does not exist
+airflow-init-1       | The container is run as root user. For security, consider using a regular user account.
+postgres-1           | 2024-10-05 13:48:30.625 UTC [77] FATAL:  password authentication failed for user "airflow"
+postgres-1           | 2024-10-05 13:48:30.625 UTC [77] DETAIL:  Role "airflow" does not exist.
+postgres-1           | 	Connection matched pg_hba.conf line 99: "host all all all md5"
+
+Solution: Fixed user on compose file and removed volumes with "docker compose down --volumes"
+
+
+
+
+Permission error
+=====================================================================================================================================
+
+airflow-worker-1     | ....................
+airflow-worker-1     | ERROR! Maximum number of retries (20) reached.
+airflow-worker-1     | 
+airflow-worker-1     | Last check result:
+airflow-worker-1     | $ airflow db check
+airflow-worker-1     | Unable to load the config, contains a configuration error.
+airflow-worker-1     | Traceback (most recent call last):
+airflow-worker-1     |   File "/usr/local/lib/python3.7/pathlib.py", line 1273, in mkdir
+airflow-worker-1     |     self._accessor.mkdir(self, mode)
+airflow-worker-1     | FileNotFoundError: [Errno 2] No such file or directory: '/opt/airflow/logs/scheduler/2024-10-05'
+airflow-worker-1     | 
+airflow-worker-1     | During handling of the above exception, another exception occurred:
+airflow-worker-1     | 
+airflow-worker-1     | Traceback (most recent call last):
+airflow-worker-1     |   File "/usr/local/lib/python3.7/logging/config.py", line 563, in configure
+airflow-worker-1     |     handler = self.configure_handler(handlers[name])
+airflow-worker-1     |   File "/usr/local/lib/python3.7/logging/config.py", line 736, in configure_handler
+airflow-worker-1     |     result = factory(**kwargs)
+airflow-worker-1     |   File "/home/airflow/.local/lib/python3.7/site-packages/airflow/utils/log/file_processor_handler.py", line 49, in __init__
+airflow-worker-1     |     Path(self._get_log_directory()).mkdir(parents=True, exist_ok=True)
+airflow-worker-1     |   File "/usr/local/lib/python3.7/pathlib.py", line 1277, in mkdir
+airflow-worker-1     |     self.parent.mkdir(parents=True, exist_ok=True)
+airflow-worker-1     |   File "/usr/local/lib/python3.7/pathlib.py", line 1273, in mkdir
+airflow-worker-1     |     self._accessor.mkdir(self, mode)
+airflow-worker-1     | PermissionError: [Errno 13] Permission denied: '/opt/airflow/logs/scheduler'
+
+Solution: Properly set the "user" variable on airflow-common section 
+
+
+
+
+DAG errors
+=======================================================================================================================================
+Running dag:
+No dags found in the first run.
+
+Solution: Change original dag folder from "./dag" to "./dags"
+          Fix syntax error before running smooth operator
+
+
+
+
+Final result:
+=======================================================================================================================================
+airflow-scheduler-1  | [2024-10-05 16:16:44,319] {scheduler_job.py:665} INFO - TaskInstance Finished: dag_id=smooth, task_id=youtube_video, run_id=manual__2024-10-05T16:16:41.560372+00:00, map_index=-1, run_start_date=2024-10-05 16:16:43.747859+00:00, run_end_date=2024-10-05 16:16:44.013386+00:00, run_duration=0.265527, state=success, executor_state=success, try_number=1, max_tries=0, job_id=3, pool=default_pool, queue=default, priority_weight=1, operator=SmoothOperator, queued_dttm=2024-10-05 16:16:42.655974+00:00, queued_by_job_id=2, pid=163
+
